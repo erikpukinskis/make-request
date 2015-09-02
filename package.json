@@ -1,0 +1,24 @@
+{
+  "name": "nrtv-ajax",
+  "version": "0.0.0",
+  "description": "Talks to a server from the browser",
+  "main": "ajax.js",
+  "dependencies": {
+    "nrtv-library": "*",
+    "nrtv-browser-bridge": "*"
+  },
+  "scripts": {
+    "test": "node --harmony test.js"
+  },
+  "devDependencies": {
+    "nrtv-element": "*",
+    "nrtv-browse": "*",
+    "nrtv-server": "*"
+  },
+  "license": "ISC",
+  "homepage": "https://github.com/erikpukinskis/nrtv-ajax",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erikpukinskis/nrtv-ajax.git"
+  }
+}
