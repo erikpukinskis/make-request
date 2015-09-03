@@ -8,10 +8,9 @@ library.test(
 
     var server = new Server()
 
-    console.log("ajax is", ajax)
-
-    var done = BrowserBridge.defineOnClient(
+    var writeResponse = BrowserBridge.defineOnClient(
         function(response) {
+          debugger
           document.write(response.some)
         }
       )
@@ -19,7 +18,7 @@ library.test(
     var button = element("button", {
       onclick: ajax.withArgs(
         "/endpoint",
-        done,
+        writeResponse,
         {some: "stuff"}
       ).evalable()
     })
@@ -37,14 +36,22 @@ library.test(
         server.post(
           "/endpoint",
           function(request, response) {
-            expect(request.body.some).to.equal(stuff)
+
+            expect(request.body).to.have.property("some", "stuff")
+
             response.json({some: "garbage"})
+          }
+        )
+
+        browser.pressButton("button", function() {
             browser.assert.text("body", "garbage")
+
+            server.stop()
+
             done()
           }
         )
 
-        browser.pressButton("button")
       }
     )
   }

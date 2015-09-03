@@ -5,60 +5,32 @@ module.exports = library.export(
   ["nrtv-browser-bridge"],
   function(BrowserBridge) {
 
-    // From http://www.quirksmode.org/js/xmlhttp.html
+    function ajax(url, callback, data, x) {
 
-    var factories = BrowserBridge.defineOnClient(
-      function XMLHttpFactories() {
-        return [
-          function () {return new XMLHttpRequest()},
-          function () {return new ActiveXObject("Msxml2.XMLHTTP")},
-          function () {return new ActiveXObject("Msxml3.XMLHTTP")},
-          function () {return new ActiveXObject("Microsoft.XMLHTTP")}
-        ]
+      if (data && typeof data != "object") {
+        throw new Error("The third thing you passed to ajax ("+JSON.stringify(data)+") doesn't look like an object. If you want to post data, give us an object.")
       }
-    )
 
-    var create = BrowserBridge.defineOnClient(
-      [factories],
-      function createXMLHTTPObject(XMLHttpFactories) {
-        var xmlhttp = false;
-        for (var i=0;i<XMLHttpFactories().length;i++) {
-          try {
-            xmlhttp = XMLHttpFactories()[i]();
-          }
-          catch (e) {
-            continue;
-          }
-          break;
-        }
-        return xmlhttp;
+      data = JSON.stringify(data)
+
+      // Code from https://gist.github.com/Xeoncross/7663273
+      
+      try {
+        x = new(this.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+        x.open(data ? 'POST' : 'GET', url, 1);
+        x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        x.setRequestHeader('Content-type', 'application/json');
+        x.onreadystatechange = function () {
+          x.readyState > 3 && callback && callback(JSON.parse(x.responseText), x);
+        };
+        x.send(data)
+      } catch (e) {
+        window.console && console.log(e);
       }
-    )
+    }
 
+    var binding = BrowserBridge.defineOnClient(ajax)
 
-    var ajax = BrowserBridge.defineOnClient(
-      [create],
-      function sendRequest(createXMLHTTPObject, url,callback, postData) {
-        var req = createXMLHTTPObject();
-        if (!req) return;
-        var method = (postData) ? "POST" : "GET";
-        req.open(method,url,true);
-        if (postData)
-          req.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-        req.onreadystatechange = function () {
-          if (req.readyState != 4) return;
-          if (req.status != 200 && req.status != 304) {
-      //      alert('HTTP error ' + req.status);
-            return;
-          }
-          callback(req);
-        }
-        if (req.readyState == 4) return;
-        req.send(postData);
-      }
-    )
-
-    console.log("ajax here is", ajax)
-    return ajax
+    return binding
   }
 )
