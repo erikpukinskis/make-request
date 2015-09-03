@@ -1,6 +1,6 @@
 {
   "name": "nrtv-ajax",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Talks to a server from the browser",
   "main": "ajax.js",
   "scripts": {
