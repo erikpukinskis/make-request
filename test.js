@@ -15,8 +15,10 @@ library.test(
         }
       )
 
+    var ajaxBinding = BrowserBridge.defineOnClient(ajax)
+
     var button = element("button", {
-      onclick: ajax.withArgs(
+      onclick: ajaxBinding.withArgs(
         "/endpoint",
         writeResponse,
         {some: "stuff"}

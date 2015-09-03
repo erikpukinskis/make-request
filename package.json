@@ -3,14 +3,11 @@
   "version": "0.1.0",
   "description": "Talks to a server from the browser",
   "main": "ajax.js",
-  "dependencies": {
-    "nrtv-library": "*",
-    "nrtv-browser-bridge": "*"
-  },
   "scripts": {
     "test": "node --harmony test.js"
   },
   "devDependencies": {
+    "nrtv-library": "*",
     "nrtv-element": "*",
     "nrtv-browse": "*",
     "nrtv-server": "*"
