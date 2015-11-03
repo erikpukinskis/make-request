@@ -1,7 +1,9 @@
 var test = require("nrtv-test")(require)
 
+// test.only("posting from server to server")
+
 test.using(
-  "posting data",
+  "posting data from the browser",
 
   ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
   function(expect, done, makeRequest, browse, Server, element, bridge) {
@@ -44,16 +46,14 @@ test.using(
     
     browse("http://localhost:5050",
       function(browser) {
+        browser.pressButton("button",runChecks)
 
-        browser.pressButton("button", function() {
-            browser.assert.text("body", "garbage")
+        function runChecks() {
+          browser.assert.text("body", "garbage")
 
-            server.stop()
-
-            done()
-          }
-        )
-
+          server.stop()
+          done()
+        }
       }
     )
   }
@@ -62,7 +62,7 @@ test.using(
 
 
 test.using(
-  "getting text",
+  "getting text from the browser",
 
   ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
   function(expect, done, makeRequest, browse, Server, element, bridge) {
@@ -105,3 +105,41 @@ test.using(
 
   }
 )
+
+
+
+test.using(
+  "posting from server to server",
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
+
+    var server = new Server()
+    server.post("/test",
+      function(request, response) {
+        console.log("fu", request.body)
+        response.send("dirt "+request.body.dirt+" is free of heavy metals!")
+      }
+    )
+
+    setTimeout(function() {
+    server.start(12118)
+
+
+    makeRequest(
+      "http://localhost:12118/test",
+      {
+        method: "post",
+        data: {
+          dirt: "from by the shed"
+        }
+      },
+      function(text) {
+        expect(text).to.equal("dirt from by the shed is free of heavy metals!")
+        server.stop()
+        done()
+      }
+    )
+  },200) // Getting socket hang up error without this. :-/
+  }
+)
+
