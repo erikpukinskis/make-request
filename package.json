@@ -6,11 +6,15 @@
   "scripts": {
     "test": "node --harmony test.js"
   },
+  "dependencies": {
+    "nrtv-browser-bridge": "*"
+  },
   "devDependencies": {
     "nrtv-library": "*",
     "nrtv-element": "*",
     "nrtv-browse": "*",
-    "nrtv-server": "*"
+    "nrtv-server": "*",
+    "nrtv-test": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/nrtv-ajax",

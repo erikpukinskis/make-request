@@ -1,49 +1,48 @@
-var library = require("nrtv-library")(require)
+var test = require("nrtv-test")(require)
 
-library.test(
+test.using(
   "posting data",
 
   ["./ajax", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
-  function(expect, done, ajax, browse, Server, element, BrowserBridge) {
+  function(expect, done, ajax, browse, Server, element, bridge) {
 
     var server = new Server()
 
-    var writeResponse = BrowserBridge.defineOnClient(
+    var writeResponse = bridge.defineFunction(
         function(response) {
-          debugger
           document.write(response.some)
         }
       )
 
-    var ajaxBinding = BrowserBridge.defineOnClient(ajax)
-
     var button = element("button", {
-      onclick: ajaxBinding.withArgs(
-        "/endpoint",
-        writeResponse,
-        {some: "stuff"}
-      ).evalable()
-    })
+      onclick: ajax
+        .definePostInBrowser()
+        .withArgs(
+          "/stuffs",
+          writeResponse,
+          {some: "stuff"}
+        ).evalable()
+      })
 
     server.get(
       "/",
-      BrowserBridge.sendPage(button)
+      bridge.sendPage(button)
+    )
+
+    server.post(
+      "/stuffs",
+      function(request, response) {
+
+        expect(request.body).to.have.property("some", "stuff")
+
+        response.json({some: "garbage"})
+      }
     )
 
     server.start(5050)
     
     browse("http://localhost:5050",
       function(browser) {
-
-        server.post(
-          "/endpoint",
-          function(request, response) {
-
-            expect(request.body).to.have.property("some", "stuff")
-
-            response.json({some: "garbage"})
-          }
-        )
 
         browser.pressButton("button", function() {
             browser.assert.text("body", "garbage")
