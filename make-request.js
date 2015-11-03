@@ -2,15 +2,16 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "nrtv-request",
-  ["nrtv-browser-bridge", "request"],
-  function(bridge, request) {
+  ["nrtv-browser-bridge", "request", "http"],
+  function(bridge, request, http) {
 
     function makeRequest() {
       var options = parseArgs(arguments)
 
       var url = options.url
       if (!options.url) {
-        url = "http://localhost:"+options.port
+        var port = options.port.call ? options.port() : options.port
+        url = "http://localhost:"+port
         if (options.prefix) {
           url = url+"/"+strip(options.prefix)
         }
@@ -31,7 +32,6 @@ module.exports = library.export(
         return string.substr(begin, length)
       }
 
-      console.log(options, "url is", url)
       var params = {
         method: options.method,
         url: url
@@ -42,13 +42,7 @@ module.exports = library.export(
         params.json = true
         params.body = options.data
 
-        console.log(
-          options.method,
-          "→",
-          params.url,
-          JSON.stringify(
-            options.data
-          )
+        console.log(options.method, "→",params.url, JSON.stringify(options.data)
         )
       }
 
@@ -57,6 +51,8 @@ module.exports = library.export(
         function(error, response) {
           if (error) {
             throw error
+          } else {
+            console.log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", params.url)
           }
           options.callback(response.body)
         }
@@ -149,13 +145,19 @@ module.exports = library.export(
         window.console && console.log(e);
       }
 
-      function handleResponse(method) {
+      function handleResponse(method, response) {
 
         var isComplete = this.readyState > 3 
 
-        if (isComplete && method == "POST") {
+        if (!isComplete) { return }
+
+        if (!this.responseText) {
+          throw new Error("No response from request "+JSON.stringify(options))
+        }
+
+        if (method == "POST") {
           options.callback(JSON.parse(this.responseText))
-        } else if (isComplete) {
+        } else {
           options.callback(this.responseText)
         }
       }

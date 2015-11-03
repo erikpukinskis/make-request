@@ -1,7 +1,5 @@
 var test = require("nrtv-test")(require)
 
-// test.only("posting from server to server")
-
 test.using(
   "posting data from the browser",
 
@@ -116,7 +114,6 @@ test.using(
     var server = new Server()
     server.post("/test",
       function(request, response) {
-        console.log("fu", request.body)
         response.send("dirt "+request.body.dirt+" is free of heavy metals!")
       }
     )
@@ -139,12 +136,12 @@ test.using(
         done()
       }
     )
-  },50) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
+  }, 200) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
   }
 )
 
 test.using(
-  "pre-binding options",
+  "pre-binding options functions",
   ["./", "nrtv-server"],
   function(expect, done, makeRequest, Server) {
 
@@ -160,7 +157,7 @@ test.using(
     var request = makeRequest.bind(
       null, {
         prefix: "/some-prefix",
-        port: 4447
+        port: function() {return 4447}
       }
     )
 
