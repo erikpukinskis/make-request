@@ -14,12 +14,29 @@ module.exports = library.export(
         function() {
           return bridge.defineFunction(
             [request()], post)
+        },
+      defineGetInBrowser:
+        function() {
+          return bridge.defineFunction(
+            [request()], get)
         }
     }
 
   }
 )
 
+function get(buildRequest, url, callback) {
+
+  var request = buildRequest(
+    "get",
+    url,
+    function(response) {
+      callback(response.responseText)
+    }
+  )
+
+  request.send()
+}
 
 function post(buildRequest, url, callback, data) {
 
@@ -29,7 +46,12 @@ function post(buildRequest, url, callback, data) {
 
   data = JSON.stringify(data)
 
-  var request = buildRequest("post", url, callback)
+  var request = buildRequest(
+    "post", url,
+    function(response) {
+      callback(JSON.parse(response.responseText))
+    }
+  )
 
   request.send(data)
 }
@@ -45,7 +67,7 @@ function buildRequest(method, url, callback) {
     x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     x.setRequestHeader('Content-type', 'application/json');
     x.onreadystatechange = function () {
-      x.readyState > 3 && callback && callback(JSON.parse(x.responseText), x);
+      x.readyState > 3 && callback && callback(x);
     };
     return x
   } catch (e) {
