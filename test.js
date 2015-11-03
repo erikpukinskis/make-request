@@ -139,7 +139,39 @@ test.using(
         done()
       }
     )
-  },200) // Getting socket hang up error without this. :-/
+  },50) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
   }
 )
 
+test.using(
+  "pre-binding options",
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
+
+    var server = new Server()
+    server.get("/some-prefix/foo",
+      function(request, response) {
+        response.send("oka!")
+      }
+    )
+
+    server.start(4447)
+
+    var request = makeRequest.bind(
+      null, {
+        prefix: "/some-prefix",
+        port: 4447
+      }
+    )
+
+    setTimeout(function() {
+    request("/foo",
+      function(text) {
+        expect(text).to.equal("oka!")
+        server.stop()
+        done()
+      }
+    )
+    }, 50) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
+  }
+)

@@ -8,9 +8,33 @@ module.exports = library.export(
     function makeRequest() {
       var options = parseArgs(arguments)
 
+      var url = options.url
+      if (!options.url) {
+        url = "http://localhost:"+options.port
+        if (options.prefix) {
+          url = url+"/"+strip(options.prefix)
+        }
+        if (options.path) {
+          url = url+"/"+strip(options.path)
+        }
+      }
+
+      function strip(string) {
+        var begin = 0
+        var length = string.length
+        if (string[begin] == "/") {
+          begin++
+        }
+        if(string[length-1] == "/") {
+          length--
+        }
+        return string.substr(begin, length)
+      }
+
+      console.log(options, "url is", url)
       var params = {
         method: options.method,
-        url: options.path
+        url: url
       }
 
       if (options.method == "POST") {
@@ -39,11 +63,20 @@ module.exports = library.export(
       )
     }
 
-    //←
-    makeRequest.defineInBrowser =
-      function() {
-        return bridge.defineFunction([parseArgs.defineInBrowser()], makeXmlHttpRequest)
-      }
+    makeRequest.defineInBrowser = defineInBrowser
+
+    makeRequest.with = function(options) {
+      var make = makeRequest.bind(null, options)
+      make.defineInBrowser =
+        function(options) {
+          return defineInBrowser().withArgs(options)
+        }
+      return make
+    }
+
+    function defineInBrowser() {
+      return bridge.defineFunction([parseArgs.defineInBrowser()], makeXmlHttpRequest)
+    }
 
     function parseArgs(args) {
       var options = {
@@ -57,10 +90,18 @@ module.exports = library.export(
         if (typeof arg == "object") {
           extend(options, arg)
         } else if (typeof arg == "string") {
-          options.path = arg
+          if (isUrl(arg)) {
+            options.url = arg
+          } else {
+            options.path = arg
+          }
         } else if (typeof arg == "function") {
           options.callback = arg
         }
+      }
+
+      function isUrl(string) {
+        return string.match(/https?\:\/\//)
       }
 
       function extend(fresh, object) {
