@@ -3,8 +3,8 @@ var test = require("nrtv-test")(require)
 test.using(
   "posting data",
 
-  ["./ajax", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
-  function(expect, done, ajax, browse, Server, element, bridge) {
+  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
+  function(expect, done, makeRequest, browse, Server, element, bridge) {
 
     var server = new Server()
 
@@ -14,15 +14,17 @@ test.using(
         }
       )
 
+    var getStuff = makeRequest
+      .defineInBrowser()
+      .withArgs({
+        method: "post",
+        path: "/stuffs",
+        data: {some: "stuff"}
+      }, writeResponse)
+
     var button = element("button", {
-      onclick: ajax
-        .definePostInBrowser()
-        .withArgs(
-          "/stuffs",
-          writeResponse,
-          {some: "stuff"}
-        ).evalable()
-      })
+      onclick: getStuff.evalable()
+    })
 
     server.get(
       "/",
@@ -32,7 +34,6 @@ test.using(
     server.post(
       "/stuffs",
       function(request, response) {
-
         expect(request.body).to.have.property("some", "stuff")
 
         response.json({some: "garbage"})
@@ -63,16 +64,16 @@ test.using(
 test.using(
   "getting text",
 
-  ["./ajax", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
-  function(expect, done, ajax, browse, Server, element, bridge) {
+  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
+  function(expect, done, makeRequest, browse, Server, element, bridge) {
 
     var server = new Server()
 
     bridge.asap(
       bridge.defineFunction(
-        [ajax.defineGetInBrowser()],
-        function(get) {
-          get("/bird", function(bird) {
+        [makeRequest.defineInBrowser()],
+        function(makeRequest) {
+          makeRequest("/bird", function(bird) {
             document.write(bird)
           })
         }
