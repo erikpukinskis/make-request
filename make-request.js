@@ -1,7 +1,7 @@
 var library = require("nrtv-library")(require)
 
 module.exports = library.export(
-  "nrtv-request",
+  "nrtv-make-request",
   ["nrtv-browser-bridge", "request", "http"],
   function(bridge, request, http) {
 
