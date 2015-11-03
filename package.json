@@ -1,6 +1,6 @@
 {
   "name": "nrtv-make-request",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Talks to a server from the browser",
   "main": "make-request.js",
   "scripts": {
