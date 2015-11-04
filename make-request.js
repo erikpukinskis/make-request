@@ -9,27 +9,10 @@ module.exports = library.export(
       var options = parseArgs(arguments)
 
       var url = options.url
-      if (!options.url) {
-        var port = options.port.call ? options.port() : options.port
-        url = "http://localhost:"+port
-        if (options.prefix) {
-          url = url+"/"+strip(options.prefix)
-        }
-        if (options.path) {
-          url = url+"/"+strip(options.path)
-        }
-      }
 
-      function strip(string) {
-        var begin = 0
-        var length = string.length
-        if (string[begin] == "/") {
-          begin++
-        }
-        if(string[length-1] == "/") {
-          length--
-        }
-        return string.substr(begin, length)
+      if (!url) {
+        var port = options.port.call ? options.port() : options.port
+        url = "http://localhost:"+port+options.fullPath
       }
 
       var params = {
@@ -96,6 +79,30 @@ module.exports = library.export(
         }
       }
 
+      options.method = options.method.toUpperCase()
+
+      options.fullPath = "/"
+
+      if (options.prefix) {
+        options.fullPath += strip(options.prefix)+"/"
+      }
+
+      if (options.path) {
+        options.fullPath += strip(options.path)
+      }
+
+      function strip(string) {
+        var begin = 0
+        var length = string.length
+        if (string[begin] == "/") {
+          begin++
+        }
+        if(string[length-1] == "/") {
+          length--
+        }
+        return string.substr(begin, length)
+      }
+
       function isUrl(string) {
         return string.match(/https?\:\/\//)
       }
@@ -106,8 +113,6 @@ module.exports = library.export(
         }
         return fresh
       }
-
-      options.method = options.method.toUpperCase()
 
       return options
     }
@@ -134,7 +139,7 @@ module.exports = library.export(
 
       try {
         var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
-        x.open(options.method, options.path, 1);
+        x.open(options.method, options.fullPath, 1);
         x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         x.setRequestHeader('Content-type', 'application/json');
         x.onreadystatechange = handleResponse.bind(x, options.method)
