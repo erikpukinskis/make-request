@@ -44,6 +44,6 @@ var element = require("nrtv-element")
 var kidFriendly = makeRequest.with({prefix: "/kids"})
 
 var kidButton = element("button", {
-  onclick: kidFriendly.defineInBrowser()
+  onclick: kidFriendly.defineInBrowser().evalable()
 })
 ~~~
