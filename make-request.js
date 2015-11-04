@@ -46,15 +46,20 @@ module.exports = library.export(
 
     makeRequest.with = function(options) {
       var make = makeRequest.bind(null, options)
-      make.defineInBrowser =
-        function(options) {
-          return defineInBrowser().withArgs(options)
-        }
+
+      make.defineInBrowser = defineInBrowser.bind(null, options)
+
       return make
     }
 
-    function defineInBrowser() {
-      return bridge.defineFunction([parseArgs.defineInBrowser()], makeXmlHttpRequest)
+    function defineInBrowser(options) {
+      var binding = bridge.defineFunction([parseArgs.defineInBrowser()], makeXmlHttpRequest)
+
+      if (options) {
+        binding = binding.withArgs(options)
+      }
+
+      return binding
     }
 
     function parseArgs(args) {
