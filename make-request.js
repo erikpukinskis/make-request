@@ -25,7 +25,7 @@ module.exports = library.export(
         params.json = true
         params.body = options.data
 
-        console.log(options.method, "→",params.url, JSON.stringify(options.data)
+        console.log(options.method, "→",params.url, printable(options.data)
         )
       } else {
         console.log(options.method, "→", params.url)
@@ -58,6 +58,26 @@ module.exports = library.export(
           options.callback(content, response, error)
         }
       )
+    }
+
+    function printable(object) {
+      if (!object) { return "[empty]" }
+
+      var keys = Object.keys(object)
+
+      var str = "{\n"
+
+      str += keys.map(function(key) {
+        var entry = "  \""+key+"\": "+JSON.stringify(object[key])
+        if (entry.length > 61) {
+          entry = entry.slice(0,60)+"...\""
+        }
+        return entry
+      }).join(",\n")
+
+      str += "\n}"
+
+      return str
     }
 
     makeRequest.defineInBrowser = defineInBrowser
