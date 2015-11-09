@@ -27,17 +27,35 @@ module.exports = library.export(
 
         console.log(options.method, "→",params.url, JSON.stringify(options.data)
         )
+      } else {
+        console.log(options.method, "→", params.url)
       }
 
       request(
         params,
         function(error, response) {
           if (error) {
-            throw error
+            switch(error.code) {
+              case 'ENOTFOUND':
+                var message = "Address not found. is your internet connection working?"
+                break
+
+              case 'ECONNREFUSED':
+                var message = "Connection refused"
+                break
+
+              default:
+                var message = error.message
+                break
+            }
+            console.log(message, "←", params.url)
           } else {
             console.log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", params.url)
           }
-          options.callback(response.body)
+
+          var content = response && response.body
+
+          options.callback(content, response, error)
         }
       )
     }
@@ -70,6 +88,7 @@ module.exports = library.export(
       for (var i=0; i<args.length; i++) {
 
         var arg = args[i]
+        var isFunction = typeof arg == "function"
 
         if (typeof arg == "object") {
           extend(options, arg)
@@ -79,8 +98,10 @@ module.exports = library.export(
           } else {
             options.path = arg
           }
-        } else if (typeof arg == "function") {
+        } else if (isFunction && !options.callback) {
           options.callback = arg
+        } else if (isFunction) {
+          options.errorCallback = arg
         }
       }
 

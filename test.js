@@ -1,62 +1,128 @@
 var test = require("nrtv-test")(require)
 
-test.using(
-  "posting data from the browser",
+// test.only("handling errors")
 
-  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
-  function(expect, done, makeRequest, browse, Server, element, bridge) {
+test.using(
+  "posting from server to server",
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
 
     var server = new Server()
-
-    var writeResponse = bridge.defineFunction(
-        function(response) {
-          document.write(response.some)
-        }
-      )
-
-    var getStuff = makeRequest
-      .defineInBrowser()
-      .withArgs({
-        method: "post",
-        path: "/stuffs",
-        data: {some: "stuff"}
-      }, writeResponse)
-
-    var button = element("button", {
-      onclick: getStuff.evalable()
-    })
-
-    server.get(
-      "/",
-      bridge.sendPage(button)
-    )
-
-    server.post(
-      "/stuffs",
+    server.post("/test",
       function(request, response) {
-        expect(request.body).to.have.property("some", "stuff")
-
-        response.json({some: "garbage"})
+        response.send("dirt "+request.body.dirt+" is free of heavy metals!")
       }
     )
 
-    server.start(5050)
-    
-    browse("http://localhost:5050",
-      function(browser) {
-        browser.pressButton("button",runChecks)
+    server.start(12118)
 
-        function runChecks() {
-          browser.assert.text("body", "garbage")
-
-          server.stop()
-          done()
+    makeRequest(
+      "http://localhost:12118/test",
+      {
+        method: "post",
+        data: {
+          dirt: "from by the shed"
         }
+      },
+      function(text) {
+        expect(text).to.equal("dirt from by the shed is free of heavy metals!")
+        server.stop()
+        done()
       }
     )
   }
 )
 
+
+test.using(
+  "pre-binding options functions",
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
+
+    var server = new Server()
+    server.get("/some-prefix/foo",
+      function(request, response) {
+        response.send("oka!")
+      }
+    )
+
+    server.start(4447)
+
+    var request = makeRequest.bind(
+      null, {
+        prefix: "/some-prefix",
+        port: function() {return 4447}
+      }
+    )
+
+    request("/foo",
+      function(text) {
+        expect(text).to.equal("oka!")
+        server.stop()
+        done()
+      }
+    )
+  }
+)
+
+
+test.using(
+  "handling errors",
+
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
+
+    var server = new Server()
+
+    server.get("/",
+      function(request, response) {
+        response.sendStatus(400)
+      }
+    )
+
+    server.get("/ok",
+      function(request, response) {
+        response.send("ok!")
+      }
+    )
+
+    server.start(5043)
+    
+    makeRequest(
+      "http://localhost:5043",
+      function(body, response) {
+        expect(response.statusCode).to.equal(400)
+        done.ish("got error back")
+        makeGoodRequest()
+      }
+    )
+
+    function makeGoodRequest() {
+      makeRequest(
+        "http://localhost:5043/ok",
+        function ok(body) {
+          expect(body).to.equal("ok!")
+          done.ish("successful request works")
+          requestToNowhere()
+        }
+      )
+    }
+
+    function requestToNowhere() {
+      makeRequest(
+        "http://localhost:61536",
+        function(body, response, error) {
+          expect(body).to.be.undefined
+          expect(response).to.be.undefined
+          expect(error.code).to.equal("ECONNREFUSED")
+          server.stop()
+          done()
+        }
+      )
+    }
+
+  }
+)
 
 
 test.using(
@@ -104,71 +170,3 @@ test.using(
   }
 )
 
-
-
-test.using(
-  "posting from server to server",
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
-
-    var server = new Server()
-    server.post("/test",
-      function(request, response) {
-        response.send("dirt "+request.body.dirt+" is free of heavy metals!")
-      }
-    )
-
-    setTimeout(function() {
-    server.start(12118)
-
-
-    makeRequest(
-      "http://localhost:12118/test",
-      {
-        method: "post",
-        data: {
-          dirt: "from by the shed"
-        }
-      },
-      function(text) {
-        expect(text).to.equal("dirt from by the shed is free of heavy metals!")
-        server.stop()
-        done()
-      }
-    )
-  }, 200) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
-  }
-)
-
-test.using(
-  "pre-binding options functions",
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
-
-    var server = new Server()
-    server.get("/some-prefix/foo",
-      function(request, response) {
-        response.send("oka!")
-      }
-    )
-
-    server.start(4447)
-
-    var request = makeRequest.bind(
-      null, {
-        prefix: "/some-prefix",
-        port: function() {return 4447}
-      }
-    )
-
-    setTimeout(function() {
-    request("/foo",
-      function(text) {
-        expect(text).to.equal("oka!")
-        server.stop()
-        done()
-      }
-    )
-    }, 50) // Getting socket hang up error at zombie/lib/pipeline.js:89 without this when we run this together with other tests
-  }
-)
