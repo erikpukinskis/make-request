@@ -20,7 +20,7 @@ module.exports = library.export(
         url: url
       }
 
-      var beQuiet = params.url == "/favicon.ico"
+      var beQuiet = params.url.match(/favicon.ico$/)
 
       function log() {
         if (!beQuiet) {
