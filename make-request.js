@@ -20,15 +20,23 @@ module.exports = library.export(
         url: url
       }
 
+      var beQuiet = params.url == "/favicon.ico"
+
+      function log() {
+        if (!beQuiet) {
+          console.log.apply(null, arguments)
+        }
+      }
+
       if (options.method == "POST") {
         params.headers = {"content-type": "application/json"}
         params.json = true
         params.body = options.data
 
-        console.log(options.method, "→",params.url, printable(options.data)
+        log(options.method, "→",params.url, printable(options.data)
         )
       } else {
-        console.log(options.method, "→", params.url)
+        log(options.method, "→", params.url)
       }
 
       request(
@@ -48,9 +56,9 @@ module.exports = library.export(
                 var message = error.message
                 break
             }
-            console.log(message, "←", params.url)
+            log(message, "←", params.url)
           } else {
-            console.log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", params.url)
+            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", params.url)
           }
 
           var content = response && response.body
