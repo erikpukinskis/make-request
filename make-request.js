@@ -214,7 +214,7 @@ module.exports = library.export(
 
         if (!isComplete) { return }
 
-        if (!this.responseText) {
+        if (typeof this.responseText == "undefined") {
           throw new Error("No response from request "+JSON.stringify(options))
         } else if (this.status >= 400) {
           throw new Error(this.responseText)
