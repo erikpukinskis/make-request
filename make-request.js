@@ -183,6 +183,10 @@ module.exports = library.export(
         )
       )
 
+      if (!options.path) {
+        throw new Error("makeRequest needs a path or a URL to hit! Pass it as a string argument, or add a path attribute to your options. You passed "+JSON.stringify(Array.prototype.slice.call(arguments, 1)))
+      }
+
       var data = options.data
 
       if (typeof data == "object") {
