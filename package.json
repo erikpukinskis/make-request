@@ -1,6 +1,6 @@
 {
   "name": "nrtv-make-request",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "description": "Talk to remote servers",
   "main": "make-request.js",
   "scripts": {
