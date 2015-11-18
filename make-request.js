@@ -221,7 +221,11 @@ module.exports = library.export(
         }
 
         if (method == "POST") {
-          options.callback(JSON.parse(this.responseText))
+          try {
+            options.callback(JSON.parse(this.responseText))
+          } catch(e) {
+            throw new Error("Couldn't parse response \""+this.responseText+"\" from "+options.fullPath+". Make sure your server is returning valid JSON")
+          }
         } else {
           options.callback(this.responseText)
         }
