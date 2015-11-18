@@ -216,6 +216,8 @@ module.exports = library.export(
 
         if (!this.responseText) {
           throw new Error("No response from request "+JSON.stringify(options))
+        } else if (this.status >= 400) {
+          throw new Error(this.responseText)
         }
 
         if (method == "POST") {
