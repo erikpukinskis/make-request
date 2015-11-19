@@ -218,8 +218,6 @@ module.exports = library.export(
 
       function handleResponse(method, ticket, response) {
 
-        wait("done", ticket)
-
         var isComplete = this.readyState > 3 
 
         if (!isComplete) { return }
@@ -241,6 +239,8 @@ module.exports = library.export(
         } else {
           callback && callback(this.responseText)
         }
+
+        wait("done", ticket)
       }
 
     }
