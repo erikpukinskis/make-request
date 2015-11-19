@@ -124,12 +124,9 @@ module.exports = library.export(
         if (typeof arg == "object") {
           extend(options, arg)
         } else if (typeof arg == "string") {
-          console.log("string!")
           if (isUrl(arg)) {
-            console.log("url!")
             options.url = arg
           } else {
-            console.log("path!")
             options.path = arg
           }
         } else if (isFunction && !options.callback) {
