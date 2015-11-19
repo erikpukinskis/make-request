@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "nrtv-browser-bridge": "*",
-    "request": "*"
+    "request": "*",
+    "nrtv-wait": "*"
   },
   "devDependencies": {
     "nrtv-library": "*",

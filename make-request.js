@@ -2,8 +2,8 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "nrtv-make-request",
-  ["nrtv-browser-bridge", "request", "http"],
-  function(bridge, request, http) {
+  ["nrtv-browser-bridge", "request", "http", "nrtv-wait"],
+  function(bridge, request, http, wait) {
 
     function makeRequest() {
       var options = parseArgs(arguments)
@@ -42,6 +42,7 @@ module.exports = library.export(
       request(
         params,
         function(error, response) {
+
           if (error) {
             switch(error.code) {
               case 'ENOTFOUND':
@@ -88,8 +89,6 @@ module.exports = library.export(
       return str
     }
 
-    makeRequest.defineInBrowser = defineInBrowser
-
     makeRequest.with = function(options) {
       var make = makeRequest.bind(null, options)
 
@@ -98,15 +97,19 @@ module.exports = library.export(
       return make
     }
 
-    function defineInBrowser(options) {
-      var binding = bridge.defineFunction([parseArgs.defineInBrowser()], makeXmlHttpRequest)
+    makeRequest.defineInBrowser = 
+      function(options) {
+        var binding = bridge.defineFunction(
+            [parseArgs.defineInBrowser(), wait.defineInBrowser()],
+            makeXmlHttpRequest
+          )
 
-      if (options) {
-        binding = binding.withArgs(options)
+        if (options) {
+          binding = binding.withArgs(options)
+        }
+
+        return binding
       }
-
-      return binding
-    }
 
     function parseArgs(args) {
       var options = {
@@ -121,9 +124,12 @@ module.exports = library.export(
         if (typeof arg == "object") {
           extend(options, arg)
         } else if (typeof arg == "string") {
+          console.log("string!")
           if (isUrl(arg)) {
+            console.log("url!")
             options.url = arg
           } else {
+            console.log("path!")
             options.path = arg
           }
         } else if (isFunction && !options.callback) {
@@ -176,18 +182,18 @@ module.exports = library.export(
         return bridge.defineFunction(parseArgs)
       }
 
-    function makeXmlHttpRequest(parseArgs) {
-      var options = parseArgs(
-        Array.prototype.slice.call(
-          arguments, 1
-        )
-      )
+    function makeXmlHttpRequest(parseArgs, wait) {
+  
+      var args = Array.prototype.slice.call(arguments, 2)
+
+      var options = parseArgs(args)
 
       if (!options.path) {
-        throw new Error("makeRequest needs a path or a URL to hit! Pass it as a string argument, or add a path attribute to your options. You passed "+JSON.stringify(Array.prototype.slice.call(arguments, 1)))
+        throw new Error("makeRequest needs a path or a URL to hit! Pass it as a string argument, or add a path attribute to your options. You passed "+JSON.stringify(Array.prototype.slice.call(arguments, 2)))
       }
 
       var data = options.data
+      var callback = options.callback
 
       if (typeof data == "object") {
         data = JSON.stringify(data)
@@ -195,12 +201,14 @@ module.exports = library.export(
 
       // Code from https://gist.github.com/Xeoncross/7663273
 
+      var ticket = wait("start")
+
       try {
         var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
         x.open(options.method, options.fullPath, 1);
         x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         x.setRequestHeader('Content-type', 'application/json');
-        x.onreadystatechange = handleResponse.bind(x, options.method)
+        x.onreadystatechange = handleResponse.bind(x, options.method, ticket)
 
         x.send(data)
 
@@ -208,7 +216,9 @@ module.exports = library.export(
         window.console && console.log(e);
       }
 
-      function handleResponse(method, response) {
+      function handleResponse(method, ticket, response) {
+
+        wait("done", ticket)
 
         var isComplete = this.readyState > 3 
 
@@ -227,9 +237,9 @@ module.exports = library.export(
             throw new Error("Couldn't parse response \""+this.responseText+"\" from "+options.fullPath+". Make sure your server is returning valid JSON.")
           }
 
-          options.callback(object)
+          callback && callback(object)
         } else {
-          options.callback(this.responseText)
+          callback && callback(this.responseText)
         }
       }
 

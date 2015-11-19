@@ -87,7 +87,7 @@ test.using(
     )
 
     server.start(5043)
-    
+
     makeRequest(
       "http://localhost:5043",
       function(body, response) {
@@ -138,32 +138,42 @@ test.using(
         [makeRequest.defineInBrowser()],
         function(makeRequest) {
           makeRequest("/bird", function(bird) {
-            document.write(bird)
+            makeRequest("/finish/"+bird)
           })
         }
       )
     )
 
-    server.get(
-      "/",
+    server.addRoute("get", "/",
       bridge.sendPage()
     )
 
-    server.get(
-      "/bird",
+    server.addRoute("get", "/bird",
       function(request, response) {
         response.send("big bird")
       }
     )
 
+    server.addRoute(
+      "get",
+      "/finish/:bird",
+      function(request, response) {
+        expect(request.params.bird).to.equal("big bird")
+        finishUp()
+      }
+    )
+
     server.start(9090)
+
+    var finishUp
 
     browse("http://localhost:9090",
       function(browser) {
-        browser.assert.text("body", "big bird")
-
-        server.stop()
-        done()
+        finishUp = function() {
+          browser.done()
+          server.stop()
+          done()
+        }
       }
     )
 
