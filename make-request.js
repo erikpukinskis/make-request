@@ -57,9 +57,9 @@ module.exports = library.export(
                 var message = error.message
                 break
             }
-            log(message, "←", params.url)
+            log(message, "←", options.method, params.url)
           } else {
-            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", params.url)
+            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
           }
 
           var content = response && response.body

@@ -1,6 +1,6 @@
 var test = require("nrtv-test")(require)
 
-// test.only("handling errors")
+// test.only("getting text from the browser")
 
 test.using(
   "posting from server to server",
@@ -159,13 +159,16 @@ test.using(
       "/finish/:bird",
       function(request, response) {
         expect(request.params.bird).to.equal("big bird")
-        finishUp()
+
+        if (finishUp) { finishUp() }
+        else { heardBack = true }
       }
     )
 
     server.start(9090)
 
     var finishUp
+    var heardBack = false
 
     browse("http://localhost:9090",
       function(browser) {
@@ -174,6 +177,7 @@ test.using(
           server.stop()
           done()
         }
+        if (heardBack) { finishUp() }
       }
     )
 
