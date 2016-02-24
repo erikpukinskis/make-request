@@ -8,7 +8,9 @@ test.using(
   function(expect, done, makeRequest, Server) {
 
     var server = new Server()
-    server.post("/test",
+    server.addRoute(
+      "post",
+      "/test",
       function(request, response) {
         response.send("dirt "+request.body.dirt+" is free of heavy metals!")
       }
@@ -40,7 +42,9 @@ test.using(
   function(expect, done, makeRequest, Server) {
 
     var server = new Server()
-    server.get("/some-prefix/foo",
+    server.addRoute(
+      "get",
+      "/some-prefix/foo",
       function(request, response) {
         response.send("oka!")
       }
@@ -74,13 +78,13 @@ test.using(
 
     var server = new Server()
 
-    server.get("/",
+    server.addRoute("get", "/",
       function(request, response) {
         response.sendStatus(400)
       }
     )
 
-    server.get("/ok",
+    server.addRoute("get", "/ok",
       function(request, response) {
         response.send("ok!")
       }
