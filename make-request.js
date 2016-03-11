@@ -29,11 +29,13 @@ module.exports = library.export(
       }
 
       if (options.method == "POST") {
-        params.headers = {"content-type": "application/json"}
-        params.json = true
-        params.body = options.data
 
-        log(options.method, "→",params.url, printable(options.data)
+        var contentType = options.contentType || "application/json"
+        params.headers = {"content-type": contentType}
+        params.json = true
+        params.body = options.body || options.data
+
+        log(options.method, "→",params.url, printable(params.body)
         )
       } else {
         log(options.method, "→", params.url)
@@ -64,12 +66,17 @@ module.exports = library.export(
 
           var content = response && response.body
 
-          options.callback(content, response, error)
+          options.callback && options.callback(content, response, error)
         }
       )
     }
 
     function printable(object) {
+
+      if (typeof object == "string") {
+        return object
+      }
+
       if (!object) { return "[empty]" }
 
       var keys = Object.keys(object)

@@ -1,6 +1,6 @@
 var test = require("nrtv-test")(require)
 
-// test.only("getting text from the browser")
+// test.only("specify content type")
 
 test.using(
   "posting from server to server",
@@ -32,6 +32,46 @@ test.using(
         done()
       }
     )
+  }
+)
+
+test.using(
+  "specify content type",
+  ["./", "nrtv-server"],
+  function(expect, done, makeRequest, Server) {
+
+    var server = new Server()
+    server.addRoute(
+      "post",
+      "/test",
+      function(request, response) {
+
+        expect(request.header("content-type")).to.equal("application/x-www-form-urlencoded")
+
+        // Server isn't handling bodies well enough to test this yet:
+
+        // expect(request.body).to.equal("hi=ho")
+
+        response.send("ok")
+
+        server.stop()
+        done()
+      }
+    )
+
+    server.start(6475)
+
+    var runChecks
+
+    makeRequest(
+      "http://localhost:6475/test",
+      {
+        method: "post",
+        contentType: "application/x-www-form-urlencoded",
+        body: "hi=ho"
+      }
+    )
+
   }
 )
 
