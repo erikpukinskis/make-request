@@ -1,5 +1,5 @@
 {
-  "name": "nrtv-make-request",
+  "name": "make-request",
   "version": "0.27.0",
   "description": "Talk to remote servers",
   "main": "make-request.js",
@@ -19,9 +19,9 @@
     "nrtv-test": "*"
   },
   "license": "ISC",
-  "homepage": "https://github.com/erikpukinskis/nrtv-make-request",
+  "homepage": "https://github.com/erikpukinskis/make-request",
   "repository": {
     "type": "git",
-    "url": "https://github.com/erikpukinskis/nrtv-make-request.git"
+    "url": "https://github.com/erikpukinskis/make-request.git"
   }
 }
