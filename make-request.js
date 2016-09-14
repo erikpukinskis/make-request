@@ -1,8 +1,8 @@
 var library = require("nrtv-library")(require)
 
 module.exports = library.export(
-  "nrtv-make-request",
-  ["nrtv-browser-bridge", "request", "http", "nrtv-wait"],
+  "make-request",
+  ["browser-bridge", "request", "http", "nrtv-wait"],
   function(bridge, request, http, wait) {
 
     function makeRequest() {
@@ -99,24 +99,23 @@ module.exports = library.export(
     makeRequest.with = function(options) {
       var make = makeRequest.bind(null, options)
 
-      make.defineInBrowser = defineInBrowser.bind(null, options)
+      make.defineOn = defineOnBridgeWithOptions.bind(null, options)
 
       return make
     }
 
-    makeRequest.defineInBrowser = 
-      function(options) {
-        var binding = bridge.defineFunction(
-            [parseArgs.defineInBrowser(), wait.defineInBrowser()],
-            makeXmlHttpRequest
-          )
+    function defineOnBridgeWithOptions(options, bridge) {
+      return makeRequest.defineOn(bridge).withArgs(options)
+    }
 
-        if (options) {
-          binding = binding.withArgs(options)
-        }
+    makeRequest.defineOn = function(bridge) {
 
-        return binding
-      }
+      var parseInBrowser = bridge.defineFunction(parseArgs)
+
+      var waitInBrowser = wait.defineInBrowser(bridge)
+
+      return bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
+    }
 
     function parseArgs(args) {
       var options = {
@@ -180,11 +179,6 @@ module.exports = library.export(
 
       return options
     }
-
-    parseArgs.defineInBrowser = 
-      function() {
-        return bridge.defineFunction(parseArgs)
-      }
 
     function makeXmlHttpRequest(parseArgs, wait) {
   

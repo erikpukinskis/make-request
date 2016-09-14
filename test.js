@@ -1,6 +1,6 @@
 var test = require("nrtv-test")(require)
 
-// test.only("specify content type")
+// test.only("getting text from the browser")
 
 test.using(
   "posting from server to server",
@@ -172,14 +172,14 @@ test.using(
 test.using(
   "getting text from the browser",
 
-  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "nrtv-browser-bridge"],
+  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "browser-bridge"],
   function(expect, done, makeRequest, browse, Server, element, bridge) {
 
     var server = new Server()
 
     bridge.asap(
       bridge.defineFunction(
-        [makeRequest.defineInBrowser()],
+        [makeRequest.defineOn(bridge)],
         function(makeRequest) {
           makeRequest("/bird", function(bird) {
             makeRequest("/finish/"+bird)

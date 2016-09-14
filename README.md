@@ -1,7 +1,7 @@
 Make HTTP requests through a standard interface on both the client and the server:
 
 ~~~javascript
-var makeRequest = require("nrtv-make-request")
+var makeRequest = require("make-request")
 
 makeRequest({
   method: "get",
@@ -14,7 +14,7 @@ makeRequest({
 Do the same thing in the browser, with browser bridge support:
 
 ~~~javascript
-var bridge = new require("nrtv-browser-bridge")
+var bridge = new require("browser-bridge")
 
 var makeSpaghetti = bridge.defineFunction(
   [makeRequest.defineInBrowser()],
