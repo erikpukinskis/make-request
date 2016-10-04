@@ -172,7 +172,7 @@ test.using(
 test.using(
   "getting text from the browser",
 
-  ["./", "nrtv-browse", "nrtv-server", "nrtv-element", "browser-bridge"],
+  ["./", "nrtv-browse", "nrtv-server", "web-element", "browser-bridge"],
   function(expect, done, makeRequest, browse, Server, element, bridge) {
 
     var server = new Server()

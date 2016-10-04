@@ -2,8 +2,8 @@ var library = require("nrtv-library")(require)
 
 module.exports = library.export(
   "make-request",
-  ["browser-bridge", "request", "http", "nrtv-wait"],
-  function(bridge, request, http, wait) {
+  ["request", "http", "nrtv-wait"],
+  function(request, http, wait) {
 
     function makeRequest() {
       var options = parseArgs(arguments)

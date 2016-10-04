@@ -7,14 +7,14 @@
     "test": "node --harmony test.js"
   },
   "dependencies": {
-    "browser-bridge": "*",
     "request": "*",
     "nrtv-wait": "*"
   },
   "devDependencies": {
     "nrtv-library": "*",
-    "nrtv-element": "*",
+    "web-element": "*",
     "nrtv-browse": "*",
+    "browser-bridge":"*",
     "nrtv-server": "*",
     "nrtv-test": "*"
   },
