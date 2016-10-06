@@ -112,7 +112,7 @@ module.exports = library.export(
 
       var parseInBrowser = bridge.defineFunction(parseArgs)
 
-      var waitInBrowser = wait.defineInBrowser(bridge)
+      var waitInBrowser = wait.defineOn(bridge)
 
       return bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
     }
