@@ -199,7 +199,7 @@ module.exports = library.export(
 
       // Code from https://gist.github.com/Xeoncross/7663273
 
-      var ticket = wait("start")
+      var ticket = wait.start()
 
       try {
         var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
@@ -238,7 +238,7 @@ module.exports = library.export(
           callback && callback(this.responseText)
         }
 
-        wait("done", ticket)
+        wait.finish(ticket)
       }
 
     }
