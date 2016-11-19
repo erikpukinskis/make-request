@@ -1,7 +1,5 @@
 var test = require("nrtv-test")(require)
 
-// test.only("getting text from the browser")
-
 test.using(
   "posting from server to server",
   ["./", "nrtv-server"],
@@ -178,14 +176,12 @@ test.using(
     var server = new Server()
 
     bridge.asap(
-      bridge.defineFunction(
-        [makeRequest.defineOn(bridge)],
-        function(makeRequest) {
-          makeRequest("/bird", function(bird) {
-            makeRequest("/finish/"+bird)
-          })
-        }
-      )
+      [makeRequest.defineOn(bridge)],
+      function(makeRequest) {
+        makeRequest("/bird", function(kindOfBird) {
+          makeRequest("/finish/"+kindOfBird)
+        })
+      }
     )
 
     server.addRoute("get", "/",
@@ -203,28 +199,24 @@ test.using(
       "/finish/:bird",
       function(request, response) {
         expect(request.params.bird).to.equal("big bird")
-
-        if (finishUp) { finishUp() }
-        else { heardBack = true }
+        response.send("ok!")
+        heardBack = true
+        finishUp()
       }
     )
 
     server.start(9090)
 
-    var finishUp
     var heardBack = false
 
-    browse("http://localhost:9090",
-      function(browser) {
-        finishUp = function() {
-          browser.done()
-          server.stop()
-          done()
-        }
-        if (heardBack) { finishUp() }
-      }
-    )
+    var browser = browse("http://localhost:9090", finishUp)
 
+    function finishUp() {
+      if (!heardBack || !browser.ready) { return }
+      browser.done()
+      server.stop()
+      done()
+    }
   }
 )
 

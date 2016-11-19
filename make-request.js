@@ -226,6 +226,8 @@ module.exports = library.export(
           throw new Error(this.responseText)
         }
 
+        wait.finish(ticket)
+
         if (method == "POST") {
           try {
             var object = JSON.parse(this.responseText)
@@ -238,7 +240,6 @@ module.exports = library.export(
           callback && callback(this.responseText)
         }
 
-        wait.finish(ticket)
       }
 
     }
