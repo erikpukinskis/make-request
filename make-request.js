@@ -199,7 +199,7 @@ module.exports = library.export(
 
       // Code from https://gist.github.com/Xeoncross/7663273
 
-      var ticket = wait.start()
+      var ticket = wait.start(options.method.toUpperCase()+" "+options.fullPath)
 
       try {
         var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
