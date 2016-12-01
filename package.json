@@ -4,9 +4,10 @@
   "description": "Talk to remote servers",
   "main": "make-request.js",
   "scripts": {
-    "test": "node --harmony test.js"
+    "test": "node test.js"
   },
   "dependencies": {
+    "module-library": "*",
     "request": "*",
     "nrtv-wait": "*"
   },
