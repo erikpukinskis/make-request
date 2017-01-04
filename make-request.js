@@ -110,11 +110,17 @@ module.exports = library.export(
 
     makeRequest.defineOn = function(bridge) {
 
+      if (bridge.__makeRequestBinding) {
+        return bridge.__makeRequestBinding
+      }
+
       var parseInBrowser = bridge.defineFunction(parseArgs)
 
       var waitInBrowser = wait.defineOn(bridge)
 
-      return bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
+      bridge.__makeRequestBinding = bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
+
+      return bridge.__makeRequestBinding
     }
 
     function parseArgs(args) {
