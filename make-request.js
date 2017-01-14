@@ -110,19 +110,26 @@ module.exports = library.export(
 
     makeRequest.defineOn = function(bridge) {
 
-      if (bridge.__makeRequestBinding) {
-        return bridge.__makeRequestBinding
+      if (!bridge.remember) {
+        debugger
+        throw new Error("Bridge "+bridge+" doesn't have remember")
       }
+
+      var binding = bridge.remember("make-request")
+
+      if (binding) { return binding }
 
       var parseInBrowser = bridge.defineFunction(parseArgs)
 
       var waitInBrowser = wait.defineOn(bridge)
 
-      bridge.__makeRequestBinding = bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
+      var binding = bridge.defineFunction([parseInBrowser, waitInBrowser], makeXmlHttpRequest)
 
-      return bridge.__makeRequestBinding
+      bridge.see("make-request", binding)
+
+      return binding
     }
-
+    
     function parseArgs(args) {
       var options = {
         method: "GET"

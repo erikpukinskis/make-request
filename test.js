@@ -185,7 +185,7 @@ test.using(
     )
 
     server.addRoute("get", "/",
-      bridge.sendPage()
+      bridge.requestHandler()
     )
 
     server.addRoute("get", "/bird",
