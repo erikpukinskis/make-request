@@ -12,12 +12,11 @@
     "nrtv-wait": "*"
   },
   "devDependencies": {
-    "nrtv-library": "*",
     "web-element": "*",
-    "nrtv-browse": "*",
+    "browser-task": "*",
     "browser-bridge": "*",
-    "nrtv-server": "*",
-    "nrtv-test": "*"
+    "web-site": "*",
+    "run-test": "*"
   },
   "license": "ISC",
   "homepage": "https://github.com/erikpukinskis/make-request",

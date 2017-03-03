@@ -1,12 +1,12 @@
-var test = require("nrtv-test")(require)
+var runTest = require("run-test")(require)
 
-test.using(
-  "posting from server to server",
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
+runTest(
+  "posting from site to site",
+  ["./", "web-site"],
+  function(expect, done, makeRequest, WebSite) {
 
-    var server = new Server()
-    server.addRoute(
+    var site = new WebSite()
+    site.addRoute(
       "post",
       "/test",
       function(request, response) {
@@ -14,7 +14,7 @@ test.using(
       }
     )
 
-    server.start(12118)
+    site.start(12118)
 
     makeRequest(
       "http://localhost:12118/test",
@@ -26,38 +26,38 @@ test.using(
       },
       function(text) {
         expect(text).to.equal("dirt from by the shed is free of heavy metals!")
-        server.stop()
+        site.stop()
         done()
       }
     )
   }
 )
 
-test.using(
+runTest(
   "specify content type",
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
+  ["./", "web-site"],
+  function(expect, done, makeRequest, WebSite) {
 
-    var server = new Server()
-    server.addRoute(
+    var site = new WebSite()
+    site.addRoute(
       "post",
       "/test",
       function(request, response) {
 
         expect(request.header("content-type")).to.equal("application/x-www-form-urlencoded")
 
-        // Server isn't handling bodies well enough to test this yet:
+        // WebSite isn't handling bodies well enough to test this yet:
 
         // expect(request.body).to.equal("hi=ho")
 
         response.send("ok")
 
-        server.stop()
+        site.stop()
         done()
       }
     )
 
-    server.start(6475)
+    site.start(6475)
 
     var runChecks
 
@@ -74,13 +74,13 @@ test.using(
 )
 
 
-test.using(
+runTest(
   "pre-binding options functions",
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
+  ["./", "web-site"],
+  function(expect, done, makeRequest, WebSite) {
 
-    var server = new Server()
-    server.addRoute(
+    var site = new WebSite()
+    site.addRoute(
       "get",
       "/some-prefix/foo",
       function(request, response) {
@@ -88,7 +88,7 @@ test.using(
       }
     )
 
-    server.start(4447)
+    site.start(4447)
 
     var request = makeRequest.bind(
       null, {
@@ -100,7 +100,7 @@ test.using(
     request("/foo",
       function(text) {
         expect(text).to.equal("oka!")
-        server.stop()
+        site.stop()
         done()
       }
     )
@@ -108,27 +108,27 @@ test.using(
 )
 
 
-test.using(
+runTest(
   "handling errors",
 
-  ["./", "nrtv-server"],
-  function(expect, done, makeRequest, Server) {
+  ["./", "web-site"],
+  function(expect, done, makeRequest, WebSite) {
 
-    var server = new Server()
+    var site = new WebSite()
 
-    server.addRoute("get", "/",
+    site.addRoute("get", "/",
       function(request, response) {
         response.sendStatus(400)
       }
     )
 
-    server.addRoute("get", "/ok",
+    site.addRoute("get", "/ok",
       function(request, response) {
         response.send("ok!")
       }
     )
 
-    server.start(5043)
+    site.start(5043)
 
     makeRequest(
       "http://localhost:5043",
@@ -157,7 +157,7 @@ test.using(
           expect(body).to.be.undefined
           expect(response).to.be.undefined
           expect(error.code).to.equal("ECONNREFUSED")
-          server.stop()
+          site.stop()
           done()
         }
       )
@@ -166,14 +166,16 @@ test.using(
   }
 )
 
+runTest.failAfter(100000000)
 
-test.using(
+
+runTest(
   "getting text from the browser",
 
-  ["./", "nrtv-browse", "nrtv-server", "web-element", "browser-bridge"],
-  function(expect, done, makeRequest, browse, Server, element, bridge) {
+  ["./", "browser-task", "web-site", "web-element", "browser-bridge"],
+  function(expect, done, makeRequest, browserTask, WebSite, element, bridge) {
 
-    var server = new Server()
+    var site = new WebSite()
 
     bridge.asap(
       [makeRequest.defineOn(bridge)],
@@ -184,17 +186,17 @@ test.using(
       }
     )
 
-    server.addRoute("get", "/",
+    site.addRoute("get", "/",
       bridge.requestHandler()
     )
 
-    server.addRoute("get", "/bird",
+    site.addRoute("get", "/bird",
       function(request, response) {
         response.send("big bird")
       }
     )
 
-    server.addRoute(
+    site.addRoute(
       "get",
       "/finish/:bird",
       function(request, response) {
@@ -205,16 +207,16 @@ test.using(
       }
     )
 
-    server.start(9090)
+    site.start(9090)
 
     var heardBack = false
 
-    var browser = browse("http://localhost:9090", finishUp)
+    var browser = browserTask("http://localhost:9090", finishUp)
 
     function finishUp() {
       if (!heardBack || !browser.ready) { return }
       browser.done()
-      server.stop()
+      site.stop()
       done()
     }
   }

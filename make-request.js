@@ -1,136 +1,9 @@
 var library = require("module-library")(require)
 
+library.define(
+  "make-request/parseArgs",
+  function() {
 
-module.exports = library.export(
-  "make-request",
-  ["request", "http", "nrtv-wait", "./make-request-in-browser"],
-  function(request, http, wait, makeRequestInBrowser) {
-
-    function makeRequest() {
-      var options = parseArgs(arguments)
-
-      var url = options.url
-
-      if (!url) {
-        var port = options.port.call ? options.port() : options.port
-        url = "http://localhost:"+port+options.fullPath
-      }
-
-      var params = {
-        method: options.method,
-        url: url
-      }
-
-      var beQuiet = params.url.match(/favicon.ico$/)
-
-      function log() {
-        if (!beQuiet) {
-          console.log.apply(null, arguments)
-        }
-      }
-
-      if (options.method == "POST") {
-
-        var contentType = options.contentType || "application/json"
-        params.headers = {"content-type": contentType}
-        params.json = true
-        params.body = options.body || options.data
-
-        log(options.method, "→",params.url, printable(params.body)
-        )
-      } else {
-        log(options.method, "→", params.url)
-      }
-
-      request(
-        params,
-        function(error, response) {
-
-          if (error) {
-            switch(error.code) {
-              case 'ENOTFOUND':
-                var message = "Address not found. is your internet connection working?"
-                break
-
-              case 'ECONNREFUSED':
-                var message = "Connection refused"
-                break
-
-              default:
-                var message = error.message
-                break
-            }
-            log(message, "←", options.method, params.url)
-          } else {
-            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
-          }
-
-          var content = response && response.body
-
-          options.callback && options.callback(content, response, error)
-        }
-      )
-    }
-
-    function printable(object) {
-
-      if (typeof object == "string") {
-        return object
-      }
-
-      if (!object) { return "[empty]" }
-
-      var keys = Object.keys(object)
-
-      var str = "{\n"
-
-      str += keys.map(function(key) {
-        var entry = "  \""+key+"\": "+JSON.stringify(object[key])
-        if (entry.length > 61) {
-          entry = entry.slice(0,60)+"...\""
-        }
-        return entry
-      }).join(",\n")
-
-      str += "\n}"
-
-      return str
-    }
-
-    makeRequest.with = function(options) {
-      var make = makeRequest.bind(null, options)
-
-      make.defineOn = defineOnBridgeWithOptions.bind(null, options)
-
-      return make
-    }
-
-    function defineOnBridgeWithOptions(options, bridge) {
-      return makeRequest.defineOn(bridge).withArgs(options)
-    }
-
-    makeRequest.defineOn = function(bridge) {
-
-      if (!bridge.remember) {
-        debugger
-        throw new Error("Bridge "+bridge+" doesn't have remember")
-      }
-
-      var binding = bridge.remember("make-request")
-
-      if (binding) { return binding }
-
-      var parseInBrowser = bridge.defineFunction(parseArgs)
-
-      var waitInBrowser = wait.defineOn(bridge)
-
-      var binding = bridge.defineFunction([parseInBrowser, waitInBrowser], makeRequestInBrowser)
-
-      bridge.see("make-request", binding)
-
-      return binding
-    }
-    
     function parseArgs(args) {
       var options = {
         method: "GET"
@@ -194,6 +67,214 @@ module.exports = library.export(
       return options
     }
 
+    return parseArgs
+  }
+)
+
+
+
+
+module.exports = library.export(
+  "make-request",
+  ["make-request/parseArgs", "nrtv-wait"],
+  function generator(parseArgs, wait) {
+
+    function makeRequestFromBrowser() {
+      var options = parseArgs(arguments)
+
+      if (!options.path) {
+        throw new Error("makeRequest needs a path or a URL to hit! Pass it as a string argument, or add a path attribute to your options. You passed "+JSON.stringify(Array.prototype.slice.call(arguments, 2)))
+      }
+
+      var data = options.data
+      var callback = options.callback
+
+      if (callback && callback.name == "parseArgs") {
+        throw new Error("bad deps")
+      }
+
+      if (typeof data == "object") {
+        data = JSON.stringify(data)
+      }
+
+      // Code from https://gist.github.com/Xeoncross/7663273
+
+      var ticket = wait.start(options.method.toUpperCase()+" "+options.fullPath)
+
+      try {
+        var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
+        x.open(options.method, options.fullPath, 1);
+        x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        x.setRequestHeader('Content-type', 'application/json');
+        x.onreadystatechange = handleResponse.bind(x, options.method, ticket)
+
+        x.send(data)
+
+      } catch (e) {
+        window.console && console.log(e);
+      }
+
+      function handleResponse(method, ticket, response) {
+
+        var isComplete = this.readyState > 3 
+
+        if (!isComplete) { return }
+
+        if (typeof this.responseText == "undefined") {
+          throw new Error("No response from request "+JSON.stringify(options))
+        } else if (this.status >= 400) {
+          throw new Error(this.responseText)
+        }
+
+        wait.finish(ticket)
+
+        if (method == "POST") {
+          try {
+            var object = JSON.parse(this.responseText)
+          } catch(e) {
+            throw new Error("Couldn't parse response \""+this.responseText+"\" from "+options.fullPath+". Make sure your server is returning valid JSON.")
+          }
+
+          callback && callback(object)
+        } else {
+          callback && callback(this.responseText)
+        }
+
+      }
+    }
+
+
+    function makeRequestOnServer() {
+      var options = parseArgs(arguments)
+
+      var url = options.url
+
+      if (!url) {
+        var port = options.port.call ? options.port() : options.port
+        url = "http://localhost:"+port+options.fullPath
+      }
+
+      var params = {
+        method: options.method,
+        url: url
+      }
+
+      var beQuiet = params.url.match(/favicon.ico$/)
+
+      function log() {
+        if (!beQuiet) {
+          console.log.apply(null, arguments)
+        }
+      }
+
+      if (options.method == "POST") {
+
+        var contentType = options.contentType || "application/json"
+        params.headers = {"content-type": contentType}
+        params.json = true
+        params.body = options.body || options.data
+
+        log(options.method, "→",params.url, printable(params.body)
+        )
+      } else {
+        log(options.method, "→", params.url)
+      }
+
+      var request = require("request")
+      var http = require("http")
+
+      request(
+        params,
+        function(error, response) {
+
+          if (error) {
+            switch(error.code) {
+              case 'ENOTFOUND':
+                var message = "Address not found. is your internet connection working?"
+                break
+
+              case 'ECONNREFUSED':
+                var message = "Connection refused"
+                break
+
+              default:
+                var message = error.message
+                break
+            }
+            log(message, "←", options.method, params.url)
+          } else {
+            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
+          }
+
+          var content = response && response.body
+
+          options.callback && options.callback(content, response, error)
+        }
+      )
+    }
+
+    function printable(object) {
+
+      if (typeof object == "string") {
+        return object
+      }
+
+      if (!object) { return "[empty]" }
+
+      var keys = Object.keys(object)
+
+      var str = "{\n"
+
+      str += keys.map(function(key) {
+        var entry = "  \""+key+"\": "+JSON.stringify(object[key])
+        if (entry.length > 61) {
+          entry = entry.slice(0,60)+"...\""
+        }
+        return entry
+      }).join(",\n")
+
+      str += "\n}"
+
+      return str
+    }
+
+    var onServer = typeof window == "undefined"
+
+    if (onServer) {
+      var makeRequest = makeRequestOnServer
+    } else {
+      var makeRequest = makeRequestFromBrowser
+    }
+
+    makeRequest.with = function(options) {
+      var make = makeRequest.bind(null, options)
+
+      make.defineOn = defineOnBridgeWithOptions.bind(null, options)
+
+      return make
+    }
+
+    function defineOnBridgeWithOptions(options, bridge) {
+      return makeRequest.defineOn(bridge).withArgs(options)
+    }
+
+    makeRequest.defineOn = function(bridge) {
+
+      var binding = bridge.remember("make-request")
+
+      if (binding) { return binding }
+
+      var parseArgsInBrowser = bridge.defineFunction(parseArgs)
+
+      var waitInBrowser = wait.defineOn(bridge)
+
+      var binding = bridge.defineSingleton([parseArgsInBrowser, waitInBrowser], generator)
+
+      bridge.see("make-request", binding)
+
+      return binding
+    }
+    
 
     return makeRequest
   }
