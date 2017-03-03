@@ -76,7 +76,7 @@ library.define(
 
 module.exports = library.export(
   "make-request",
-  ["make-request/parseArgs", "nrtv-wait"],
+  ["make-request/parseArgs", "global-wait"],
   function generator(parseArgs, wait) {
 
     function makeRequestFromBrowser() {

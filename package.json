@@ -9,7 +9,7 @@
   "dependencies": {
     "module-library": "*",
     "request": "*",
-    "nrtv-wait": "*"
+    "global-wait": "*"
   },
   "devDependencies": {
     "web-element": "*",
