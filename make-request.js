@@ -180,6 +180,16 @@ module.exports = library.export(
         log(options.method, "→", params.url)
       }
 
+      if (options.headers) {
+        for(var key in options.headers) {
+          var value = options.headers[key]
+          if (!params.headers) {
+            params.headers = {}
+          }
+          params.headers[key] = value
+        }
+      }
+
       var request = require("request")
       var http = require("http")
 
