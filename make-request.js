@@ -104,6 +104,11 @@ module.exports = library.export(
       try {
         var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
         x.open(options.method, options.fullPath, 1);
+        if (options.headers) {
+          for(var key in options.headers) {
+            x.setRequestHeader(key, options.headers[key])
+          }
+        }
         x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         x.setRequestHeader('Content-type', 'application/json');
         x.onreadystatechange = handleResponse.bind(x, options.method, ticket)
