@@ -173,9 +173,10 @@ runTest(
   "getting text from the browser",
 
   ["./", "browser-task", "web-site", "web-element", "browser-bridge"],
-  function(expect, done, makeRequest, browserTask, WebSite, element, bridge) {
+  function(expect, done, makeRequest, browserTask, WebSite, element, BrowserBridge) {
 
     var site = new WebSite()
+    var bridge = new BrowserBridge()
 
     bridge.asap(
       [makeRequest.defineOn(bridge)],

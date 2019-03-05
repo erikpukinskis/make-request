@@ -1,83 +1,9 @@
 var library = require("module-library")(require)
 
-library.define(
-  "make-request/parseArgs",
-  function() {
-
-    function parseArgs(args) {
-      var options = {
-        method: "GET"
-      }
-
-      for (var i=0; i<args.length; i++) {
-
-        var arg = args[i]
-        var isFunction = typeof arg == "function"
-
-        if (typeof arg == "object") {
-          extend(options, arg)
-        } else if (typeof arg == "string") {
-          if (isUrl(arg)) {
-            options.url = arg
-          } else {
-            options.path = arg
-          }
-        } else if (isFunction && !options.callback) {
-          options.callback = arg
-        } else if (isFunction) {
-          options.errorCallback = arg
-        }
-      }
-
-      options.method = options.method.toUpperCase()
-
-      options.fullPath = "/"
-
-      if (options.prefix) {
-        options.fullPath += strip(options.prefix)+"/"
-      }
-
-      if (options.path) {
-        options.fullPath += strip(options.path)
-      }
-
-      function strip(string) {
-        var begin = 0
-        var length = string.length
-        if (string[begin] == "/") {
-          begin++
-        }
-        if(string[length-1] == "/") {
-          length--
-        }
-        return string.substr(begin, length)
-      }
-
-      function isUrl(string) {
-        return string.match(/https?\:\/\//)
-      }
-
-      function extend(fresh, object) {
-        for(var key in object) {
-          fresh[key] = object[key]
-        }
-        return fresh
-      }
-
-      return options
-    }
-
-    return parseArgs
-  }
-)
-
-
-
-
 module.exports = library.export(
   "make-request",
-  ["make-request/parseArgs", "global-wait"],
-  function generator(parseArgs, wait) {
+  ["global-wait"],
+  function generator(wait) {
 
     function makeRequestFromBrowser() {
       var options = parseArgs(arguments)
@@ -289,7 +215,73 @@ module.exports = library.export(
 
       return binding
     }
-    
+
+
+
+    // This used to be a whole separat module once:!
+
+    function parseArgs(args) {
+      var options = {
+        method: "GET"
+      }
+
+      for (var i=0; i<args.length; i++) {
+
+        var arg = args[i]
+        var isFunction = typeof arg == "function"
+
+        if (typeof arg == "object") {
+          extend(options, arg)
+        } else if (typeof arg == "string") {
+          if (isUrl(arg)) {
+            options.url = arg
+          } else {
+            options.path = arg
+          }
+        } else if (isFunction && !options.callback) {
+          options.callback = arg
+        } else if (isFunction) {
+          options.errorCallback = arg
+        }
+      }
+
+      options.method = options.method.toUpperCase()
+
+      options.fullPath = "/"
+
+      if (options.prefix) {
+        options.fullPath += strip(options.prefix)+"/"
+      }
+
+      if (options.path) {
+        options.fullPath += strip(options.path)
+      }
+
+      return options
+    }    
+
+    function strip(string) {
+      var begin = 0
+      var length = string.length
+      if (string[begin] == "/") {
+        begin++
+      }
+      if(string[length-1] == "/") {
+        length--
+      }
+      return string.substr(begin, length)
+    }
+
+    function isUrl(string) {
+      return string.match(/https?\:\/\//)
+    }
+
+    function extend(fresh, object) {
+      for(var key in object) {
+        fresh[key] = object[key]
+      }
+      return fresh
+    }
 
     return makeRequest
   }
