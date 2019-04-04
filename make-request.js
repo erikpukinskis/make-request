@@ -98,6 +98,10 @@ module.exports = library.export(
         }
       }
 
+      if (options.timeout) {
+        params.timeout = options.timeout
+      }
+
       if (options.method == "POST") {
 
         var contentType = options.contentType || "application/json"
