@@ -209,11 +209,11 @@ module.exports = library.export(
 
       if (binding) { return binding }
 
-      var parseArgsInBrowser = bridge.defineFunction(parseArgs)
-
       var waitInBrowser = wait.defineOn(bridge)
 
-      var binding = bridge.defineSingleton([parseArgsInBrowser, waitInBrowser], generator)
+      var binding = bridge.defineSingleton([
+        waitInBrowser],
+        generator)
 
       bridge.see("make-request", binding)
 
