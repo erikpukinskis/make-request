@@ -19,6 +19,7 @@ module.exports = library.export(
       if (options.data) {
         var data = JSON.stringify(
           options.data)
+
       } else if (options.formData) {
         var data = stringifyQuery(
           options.formData)
@@ -80,17 +81,16 @@ module.exports = library.export(
       } catch (e) {
         window.console && console.log(e)}
 
-      function stringifyQuery(params) {
-        var keyValues = Object.keys(params).map(
-          function(key) {
-            key = encodeURIComponent(
-              key)
-            value = encodeURIComponent(
-              params[key])
-            return key+"=" +value})
-
-        return keyValues.join(
-          "%")}
+    function stringifyQuery(params){
+      var keyValues = Object.keys(params).map(
+        function(key) {
+          key = encodeURIComponent(
+            key)
+          value = encodeURIComponent(
+            params[key])
+          return key+"="+value})
+      return keyValues.join(
+        "&")}
 
       function handleResponseInBrowser(method, ticket, response) {
 
@@ -132,19 +132,6 @@ module.exports = library.export(
         url = "http://localhost:"+port+options.fullPath
       }
 
-      // HTTP Basic Auth
-
-      if (options.auth && !options.auth.user || !options.auth.password) {
-        throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
-
-      } else if (options.auth) {
-        var payload = 
-          options.auth.user+":"+options.auth.password
-        url = url.replace(
-          "://",
-          "://"+payload+"@")
-      }
-
       var params = {
         method: options.method,
         url: url
@@ -170,9 +157,12 @@ module.exports = library.export(
 
         if (options.body) {
           params.body = options.body
+
         } else if (options.data) {
           params.body = options.data
+
         } else if (options.formData) {
+          debugger
           params.body = stringifyQuery(
             options.formData)
         }
@@ -197,47 +187,61 @@ module.exports = library.export(
         }
       }
 
+
+      // HTTP Basic Auth
+
+      if (options.auth && !options.auth.user || !options.auth.password) {
+        throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
+
+      } else if (options.auth) {
+        if (!params.headers) {
+          params.headers = {}}
+        params.headers["Authorization"] = options.auth.user+":"+options.auth.password
+      }
+
+
       var request = require("request")
       var http = require("http")
 
+      console.log("MAKE REQUEST:"+JSON.stringify(params, null, 2))
       request(
         params,
         handleResponseOnServer)
-    }
 
-    function handleResponseOnServer(options, error, response) {
-      if (error && error.code) {
-        switch(error.code) {
-          case 'ENOTFOUND':
-            var message = "Address not found. is your internet connection working?"
-            break
+      function handleResponseOnServer(error, response) {
+        if (error && error.code) {
+          switch(error.code) {
+            case 'ENOTFOUND':
+              var message = "Address not found. is your internet connection working?"
+              break
 
-          case 'ECONNREFUSED':
-            var message = "Connection refused"
-            break
+            case 'ECONNREFUSED':
+              var message = "Connection refused"
+              break
 
-          default:
-            var message = error.message
-            break
+            default:
+              var message = error.message
+              break
+          }
+          log(message, "←", options.method, params.url)
+        } else {
+          log(response.statusCode.toString(), require("http").STATUS_CODES[response.statusCode], "←", options.method, params.url)
         }
-        log(message, "←", options.method, params.url)
-      } else {
-        log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
+
+        var content = response && response.body
+
+        options.callback && options.callback(content, response, error)
       }
-
-      var content = response && response.body
-
-      options.callback && options.callback(content, response, error)
     }
 
-    function stringifyQuery(params) {
+    function stringifyQuery(params){
       var keyValues = Object.keys(params).map(
         function(key) {
-          key = encodeURIComponent(
-            key)
-          value = encodeURIComponent(
-            params[key])
-          return key+"="+value})}
+          key = key
+          value = params[key]
+          return key+"="+value})
+      return keyValues.join(
+        "&")}
 
     function printable(object) {
 
