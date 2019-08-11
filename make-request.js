@@ -185,10 +185,10 @@ module.exports = library.export(
 
       // HTTP Basic Auth
 
-      if (options.auth && !options.auth.user || !options.auth.password) {
-        throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
+      if (options.auth) {
+        if (!options.auth.user || !options.auth.password) {
+          throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")} 
 
-      } else if (options.auth) {
         if (!params.headers) {
           params.headers = {}}
         var payload = "Basic "+Buffer.from(options.auth.user+":"+options.auth.password).toString("base64")
