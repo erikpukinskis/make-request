@@ -5,6 +5,8 @@ module.exports = library.export(
   ["global-wait"],
   function generator(wait) {
 
+    // Client side
+
     function makeRequestFromBrowser() {
       var options = parseArgs(arguments)
 
@@ -12,40 +14,85 @@ module.exports = library.export(
         throw new Error("makeRequest needs a path or a URL to hit! Pass it as a string argument, or add a path attribute to your options. You passed "+JSON.stringify(Array.prototype.slice.call(arguments, 2)))
       }
 
-      var data = options.data
       var callback = options.callback
 
-      if (callback && callback.name == "parseArgs") {
-        throw new Error("bad deps")
+      if (options.data) {
+        var data = JSON.stringify(
+          options.data)
+      } else if (options.formData) {
+        var data = stringifyQuery(
+          options.formData)
       }
 
-      if (typeof data == "object") {
-        data = JSON.stringify(data)
-      }
+      // Code originally from https://gist.github.com/Xeoncross/7663273
 
-      // Code from https://gist.github.com/Xeoncross/7663273
+      // But I've modified it a lot
 
       var ticket = wait.start(options.method.toUpperCase()+" "+options.fullPath)
 
       try {
-        var x = new(window.XMLHttpRequest || ActiveXObject)('MSXML2.XMLHTTP.3.0');
-        x.open(options.method, options.fullPath, 1);
+        var X = window.XMLHttpRequest || ActiveXObject
+
+        var x = new X("MSXML2.XMLHTTP.3.0")
+
+        x.open(
+          options.method,
+          options.fullPath,
+          1)
+
+
+        // Custom HTTP headersr
         if (options.headers) {
           for(var key in options.headers) {
-            x.setRequestHeader(key, options.headers[key])
+            x.setRequestHeader(
+              key,
+              options.headers[key])
           }
         }
-        x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        x.setRequestHeader('Content-type', 'application/json');
-        x.onreadystatechange = handleResponse.bind(x, options.method, ticket)
+
+
+        // HTTP basic auth
+
+        if (options.auth) {
+          throw new Error("options.auth in the browser is untested. Delete this line of code and make a pull request and I'll test it. -Erik")
+
+        } else if (options.auth && !options.auth.user || !options.auth.password) {
+            throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
+
+        } else {
+          var payload = btoa(
+            options.auth.user+":"+options.auth.password)
+          x.setRequestHeader(
+            "Authorization",
+            "Basic "+payload)}
+
+        x.setRequestHeader(
+          'X-Requested-With',
+          'XMLHttpRequest')
+        x.setRequestHeader(
+          'Content-type',
+          'application/json')
+
+        x.onreadystatechange = handleResponseInBrowser.bind(x, options.method, ticket)
 
         x.send(data)
 
       } catch (e) {
-        window.console && console.log(e);
-      }
+        window.console && console.log(e)}
 
-      function handleResponse(method, ticket, response) {
+      function stringifyQuery(params) {
+        var keyValues = Object.keys(params).map(
+          function(key) {
+            key = encodeURIComponent(
+              key)
+            value = encodeURIComponent(
+              params[key])
+            return key+"=" +value})
+
+        return keyValues.join(
+          "%")}
+
+      function handleResponseInBrowser(method, ticket, response) {
 
         var isComplete = this.readyState > 3 
 
@@ -65,15 +112,15 @@ module.exports = library.export(
           } catch(e) {
             throw new Error("Couldn't parse response \""+this.responseText+"\" from "+options.fullPath+". Make sure your server is returning valid JSON.")
           }
-
           callback && callback(object)
         } else {
           callback && callback(this.responseText)
         }
-
       }
     }
 
+
+    // Server side
 
     function makeRequestOnServer() {
       var options = parseArgs(arguments)
@@ -83,6 +130,19 @@ module.exports = library.export(
       if (!url) {
         var port = options.port.call ? options.port() : options.port
         url = "http://localhost:"+port+options.fullPath
+      }
+
+      // HTTP Basic Auth
+
+      if (options.auth && !options.auth.user || !options.auth.password) {
+        throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
+
+      } else if (options.auth) {
+        var payload = 
+          options.auth.user+":"+options.auth.password
+        url = url.replace(
+          "://",
+          "://"+payload+"@")
       }
 
       var params = {
@@ -107,20 +167,32 @@ module.exports = library.export(
         var contentType = options.contentType || "application/json"
         params.headers = {"content-type": contentType}
         params.json = true
-        params.body = options.body || options.data
 
-        log(options.method, "→",params.url, printable(params.body)
-        )
+        if (options.body) {
+          params.body = options.body
+        } else if (options.data) {
+          params.body = options.data
+        } else if (options.formData) {
+          params.body = stringifyQuery(
+            options.formData)
+        }
+
+        log(
+          options.method,
+          "→",params.url,
+          printable(params.body))
       } else {
         log(options.method, "→", params.url)
       }
+
+
+      // Custom HTTP headers
 
       if (options.headers) {
         for(var key in options.headers) {
           var value = options.headers[key]
           if (!params.headers) {
-            params.headers = {}
-          }
+            params.headers = {}}
           params.headers[key] = value
         }
       }
@@ -130,33 +202,42 @@ module.exports = library.export(
 
       request(
         params,
-        function(error, response) {
-
-          if (error) {
-            switch(error.code) {
-              case 'ENOTFOUND':
-                var message = "Address not found. is your internet connection working?"
-                break
-
-              case 'ECONNREFUSED':
-                var message = "Connection refused"
-                break
-
-              default:
-                var message = error.message
-                break
-            }
-            log(message, "←", options.method, params.url)
-          } else {
-            log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
-          }
-
-          var content = response && response.body
-
-          options.callback && options.callback(content, response, error)
-        }
-      )
+        handleResponseOnServer)
     }
+
+    function handleResponseOnServer(options, error, response) {
+      if (error && error.code) {
+        switch(error.code) {
+          case 'ENOTFOUND':
+            var message = "Address not found. is your internet connection working?"
+            break
+
+          case 'ECONNREFUSED':
+            var message = "Connection refused"
+            break
+
+          default:
+            var message = error.message
+            break
+        }
+        log(message, "←", options.method, params.url)
+      } else {
+        log(response.statusCode.toString(), http.STATUS_CODES[response.statusCode], "←", options.method, params.url)
+      }
+
+      var content = response && response.body
+
+      options.callback && options.callback(content, response, error)
+    }
+
+    function stringifyQuery(params) {
+      var keyValues = Object.keys(params).map(
+        function(key) {
+          key = encodeURIComponent(
+            key)
+          value = encodeURIComponent(
+            params[key])
+          return key+"="+value})}
 
     function printable(object) {
 
