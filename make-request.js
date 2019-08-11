@@ -162,9 +162,7 @@ module.exports = library.export(
           params.body = options.data
 
         } else if (options.formData) {
-          debugger
-          params.body = stringifyQuery(
-            options.formData)
+          params.form = options.formData
         }
 
       }
