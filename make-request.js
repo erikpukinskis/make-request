@@ -237,8 +237,10 @@ module.exports = library.export(
     function stringifyQuery(params){
       var keyValues = Object.keys(params).map(
         function(key) {
-          key = key
-          value = params[key]
+          key = encodeURIComponent(
+            key)
+          value = encodeURIComponent(
+            params[key])
           return key+"="+value})
       return keyValues.join(
         "&")}
@@ -375,4 +377,3 @@ module.exports = library.export(
     return makeRequest
   }
 )
-
