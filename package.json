@@ -1,6 +1,6 @@
 {
   "name": "make-request",
-  "version": "0.47.0",
+  "version": "0.48.0",
   "description": "Talk to remote servers",
   "main": "make-request.js",
   "scripts": {
