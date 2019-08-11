@@ -167,14 +167,11 @@ module.exports = library.export(
             options.formData)
         }
 
-        log(
-          options.method,
-          "→",params.url,
-          printable(params.body))
-      } else {
-        log(options.method, "→", params.url)
       }
 
+      function logIt(extras) {
+        log("MAKE REQUEST * "+options.method, "→", params.url, JSON.stringify(params, null, 2))
+      }
 
       // Custom HTTP headers
 
@@ -196,14 +193,16 @@ module.exports = library.export(
       } else if (options.auth) {
         if (!params.headers) {
           params.headers = {}}
-        params.headers["Authorization"] = options.auth.user+":"+options.auth.password
+        var payload = "Basic "+Buffer.from(options.auth.user+":"+options.auth.password).toString("base64")
+        params.headers["Authorization"] = payload
       }
 
 
       var request = require("request")
       var http = require("http")
 
-      console.log("MAKE REQUEST:"+JSON.stringify(params, null, 2))
+      logIt(params.body)
+
       request(
         params,
         handleResponseOnServer)
