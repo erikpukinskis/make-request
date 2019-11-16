@@ -227,7 +227,7 @@ module.exports = library.export(
           }
           log(message, "←", options.method, params.url)
         } else {
-          log(response.statusCode.toString(), require("http").STATUS_CODES[response.statusCode], "←", options.method, params.url)
+          response.statusCode && log(response.statusCode.toString(), require("http").STATUS_CODES[response.statusCode], "←", options.method, params.url)
         }
 
         var content = response && response.body
