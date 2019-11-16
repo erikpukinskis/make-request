@@ -57,15 +57,20 @@ module.exports = library.export(
         if (options.auth) {
           throw new Error("options.auth in the browser is untested. Delete this line of code and make a pull request and I'll test it. -Erik")
 
-        } else if (options.auth && !options.auth.user || !options.auth.password) {
-            throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")
+        } else if (options.auth) {
 
-        } else {
-          var payload = btoa(
-            options.auth.user+":"+options.auth.password)
+          if (!options.auth.user || !options.auth.password) {
+            throw new Error(
+              "The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")}
+
+          var login = options.auth.user+":"+options.auth.password
+
+          var payload = btoa(login)
+
           x.setRequestHeader(
             "Authorization",
-            "Basic "+payload)}
+            "Basic "+payload)
+        }
 
         x.setRequestHeader(
           'X-Requested-With',
@@ -187,7 +192,7 @@ module.exports = library.export(
 
       if (options.auth) {
         if (!options.auth.user || !options.auth.password) {
-          throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")} 
+          throw new Error("The \"auth\": option for makeRequest needs an object with a \"user\" key and a \"password\" key")}
 
         if (!params.headers) {
           params.headers = {}}
